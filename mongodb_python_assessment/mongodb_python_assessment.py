@@ -205,7 +205,7 @@ class MovieState(rx.State):
 
     @rx.event(background=True)
     async def load_movies(self):
-        """Load current page (and preload next page if in coverflow mode)."""
+        """Load current page."""
         try:
             coll = get_movies_collection()
             criteria = self._criteria()
@@ -254,9 +254,6 @@ class MovieState(rx.State):
             async with self:
                 self.loading = False
                 self.error = f"{type(e).__name__}: {e}"
-
-    # prefetch_next_coverflow removed (coverflow disabled)
-
 
 # -----------------------------
 # UI Components
@@ -327,7 +324,6 @@ def toolbar() -> rx.Component:
         width="100%",
     )
 
-
 def movie_card(movie: rx.Var[Dict[str, Any]]) -> rx.Component:
     return rx.card(
         rx.vstack(
@@ -383,9 +379,6 @@ def cards_view() -> rx.Component:
         spacing="4",
         align="center",
     )
-
-
-# coverflow UI removed; only cards view is supported
 
 
 def pager() -> rx.Component:
