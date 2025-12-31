@@ -1,4 +1,4 @@
-# Mflix Reflex Browser (PyMongo + MongoDB Sample Dataset)
+# Mflix Reflex Browser
 
 A basic single-page application (SPA) built with **Reflex** + **PyMongo** that lets you **search and filter** the MongoDB **sample_mflix** movie catalog. It includes a responsive **Cards view**, **configurable page size**, and simple pagination.
 
@@ -28,21 +28,6 @@ A basic single-page application (SPA) built with **Reflex** + **PyMongo** that l
   - Collection: `movies`
 - A MongoDB connection string (Atlas recommended)
 
-## Project Structure (typical)
-
-Depending on the name you chose during `reflex init`, you should have something like:
-
-```
-
-mflix_reflex/
-.env
-requirements.txt (optional)
-mflix_reflex/
-mflix_reflex.py   <-- main app (State + UI)
-rxconfig.py
-
-````
-
 ## Setup
 
 ### 1) Create and activate a virtualenv
@@ -50,7 +35,7 @@ rxconfig.py
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-````
+```
 
 ### 2) Install dependencies
 
@@ -98,30 +83,11 @@ Then open:
 * The app builds a MongoDB query from the UI filters (search text, genre, year range).
 * Results are sorted by `title` and fetched using `skip`/`limit` based pagination.
 
-<!-- Coverflow and preload behavior removed: the app now uses simple pagination. -->
-
 ## Usage Tips
 
 * Try searching for common titles like: `star`, `love`, `war`
 * Use genre filtering to narrow a large result set quickly.
-<!-- Coverflow usage tips removed (cards view only). -->
 
-## Troubleshooting
-
-### “ServerSelectionTimeoutError” / cannot connect
-
-* Double-check `MONGODB_URI`
-* Confirm your Atlas **IP Access List** allows your current IP
-* Ensure your cluster is running and credentials are correct
-
-### No movies show up / zero results
-
-* Verify the **Sample Mflix dataset** is loaded into your cluster
-* Confirm `MFLIX_DB=sample_mflix` and `MFLIX_COLLECTION=movies`
-
-### Posters missing
-
-Some entries may not have posters; the UI uses a simple placeholder to keep layout stable.
 
 ## License
 

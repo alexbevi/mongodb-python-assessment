@@ -37,11 +37,7 @@ def get_movies_collection():
 
     if _MONGO_CLIENT is None:
         # certifi helps when connecting to Atlas from environments missing CA bundle.
-        _MONGO_CLIENT = MongoClient(
-            uri,
-            tlsCAFile=certifi.where(),
-            serverSelectionTimeoutMS=5000,
-        )
+        _MONGO_CLIENT = MongoClient(uri, tlsCAFile=certifi.where())
     return _MONGO_CLIENT[db_name][coll_name]
 
 
