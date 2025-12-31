@@ -72,7 +72,7 @@ def serialize_movie(doc: Dict[str, Any]) -> Dict[str, Any]:
 
 class MovieState(rx.State):
     # UI state
-    view_mode: str = "cards"          # "cards" | "coverflow"
+    view_mode: str = "cards"
     page_size: str = "25"
     page: int = 0                    # 0-based page index
 
@@ -85,15 +85,9 @@ class MovieState(rx.State):
     # Data
     total: int = 0
     movies: List[Dict[str, Any]] = []
-    next_movies: List[Dict[str, Any]] = []  # coverflow preload buffer
-
-    # Coverflow UX
-    selected_index: int = 0
-
     # Misc
     genres: List[str] = ["All"]
     loading: bool = False
-    prefetching: bool = False
     error: str = ""
 
     # -----------------------------
@@ -176,18 +170,7 @@ class MovieState(rx.State):
     def set_max_year(self, value: str):
         self.max_year = value
 
-    def set_view(self, value: str | List[str]):
-        # `segmented_control` may supply a single string or a list of strings
-        # (e.g., in some selection modes). Normalize to a single string.
-        if isinstance(value, list):
-            value = value[0] if value else ""
-        self.view_mode = value
-        self.page = 0
-        self.selected_index = 0
-        self.movies = []
-        self.next_movies = []
-        self.error = ""
-        return MovieState.load_movies
+    # view switching removed; only 'cards' is supported
 
     def change_page_size(self, value: str):
         try:
@@ -196,17 +179,13 @@ class MovieState(rx.State):
         except Exception:
             self.page_size = "25"
         self.page = 0
-        self.selected_index = 0
         self.movies = []
-        self.next_movies = []
         self.error = ""
         return MovieState.load_movies
 
     def apply_filters(self):
         self.page = 0
-        self.selected_index = 0
         self.movies = []
-        self.next_movies = []
         self.error = ""
         return MovieState.load_movies
 
@@ -214,47 +193,15 @@ class MovieState(rx.State):
         if self.page <= 0:
             return
         self.page -= 1
-        self.selected_index = 0
         self.movies = []
-        self.next_movies = []
         return MovieState.load_movies
 
     def next_page(self):
         if not self.has_next:
             return
         self.page += 1
-        self.selected_index = 0
         self.movies = []
-        self.next_movies = []
         return MovieState.load_movies
-
-    def select_cover(self, idx: int):
-        self.selected_index = idx
-
-    # -----------------------------
-    # Coverflow: “seamless next” using preload + background refill
-    # -----------------------------
-
-    def coverflow_next(self):
-        """Advance immediately using the preloaded next_movies, then refill buffer in background."""
-        if self.view_mode != "coverflow" or not self.has_next:
-            return
-
-        # If we have a preload buffer, swap instantly.
-        if self.next_movies:
-            self.page += 1
-            self.movies = self.next_movies
-            self.next_movies = []
-            self.selected_index = 0
-            self.prefetching = True
-            # Background task refills the *next* buffer. Background events are designed
-            # to run without blocking UI interactivity. :contentReference[oaicite:4]{index=4}
-            return MovieState.prefetch_next_coverflow
-        else:
-            # Fallback: just load normally if buffer wasn't ready.
-            self.page += 1
-            self.selected_index = 0
-            return MovieState.load_movies
 
     # -----------------------------
     # Data loaders (background)
@@ -298,74 +245,21 @@ class MovieState(rx.State):
                 coll.find(criteria, projection)
                 .sort("title", 1)
                 .skip(skip)
-                .limit(page_size_int * (2 if self.view_mode == "coverflow" else 1))
+                .limit(page_size_int)
             )
             serialized = [serialize_movie(d) for d in docs]
 
-            if self.view_mode == "coverflow":
-                current = serialized[: page_size_int]
-                nxt = serialized[page_size_int : page_size_int * 2]
-                async with self:
-                    self.total = total
-                    self.movies = current
-                    self.next_movies = nxt  # preload next <pagesize>
-                    self.selected_index = 0
-                    self.loading = False
-                    self.prefetching = False
-            else:
-                async with self:
-                    self.total = total
-                    self.movies = serialized[: page_size_int]
-                    self.next_movies = []
-                    self.selected_index = 0
-                    self.loading = False
-                    self.prefetching = False
+            async with self:
+                self.total = total
+                self.movies = serialized[: page_size_int]
+                self.loading = False
 
         except Exception as e:
             async with self:
                 self.loading = False
-                self.prefetching = False
                 self.error = f"{type(e).__name__}: {e}"
 
-    @rx.event(background=True)
-    async def prefetch_next_coverflow(self):
-        """Refill next_movies for coverflow after we advanced."""
-        try:
-            coll = get_movies_collection()
-            criteria = self._criteria()
-            projection = {
-                "title": 1,
-                "year": 1,
-                "genres": 1,
-                "plot": 1,
-                "runtime": 1,
-                "rated": 1,
-                "imdb.rating": 1,
-                "poster": 1,
-            }
-
-            # next page relative to *current* page
-            try:
-                page_size_int = int(self.page_size)
-            except Exception:
-                page_size_int = 25
-            skip = (self.page + 1) * page_size_int
-            docs = list(
-                coll.find(criteria, projection)
-                .sort("title", 1)
-                .skip(skip)
-                .limit(page_size_int)
-            )
-            nxt = [serialize_movie(d) for d in docs]
-
-            async with self:
-                self.next_movies = nxt
-                self.prefetching = False
-
-        except Exception as e:
-            async with self:
-                self.prefetching = False
-                self.error = f"{type(e).__name__}: {e}"
+    # prefetch_next_coverflow removed (coverflow disabled)
 
 
 # -----------------------------
@@ -377,13 +271,6 @@ def toolbar() -> rx.Component:
         rx.vstack(
             rx.hstack(
                 rx.heading("Mflix Movie Browser", size="7"),
-                rx.spacer(),
-                rx.segmented_control.root(
-                    rx.segmented_control.item("Cards", value="cards"),
-                    rx.segmented_control.item("Coverflow", value="coverflow"),
-                    value=MovieState.view_mode,
-                    on_change=MovieState.set_view,
-                ),
                 spacing="4",
                 width="100%",
                 align="center",
@@ -422,6 +309,7 @@ def toolbar() -> rx.Component:
                 ),
                 rx.button("Search", on_click=MovieState.apply_filters),
                 rx.spacer(),
+                rx.divider(),
                 pager(),
                 wrap="wrap",
                 spacing="3",
@@ -501,84 +389,11 @@ def cards_view() -> rx.Component:
     )
 
 
-def coverflow_item(movie: rx.Var[Dict[str, Any]], idx: rx.Var[int]) -> rx.Component:
-    # Very lightweight “coverflow-ish” effect:
-    # selected = larger + flat; left/right = tilted.
-    transform = rx.cond(
-        idx == MovieState.selected_index,
-        "scale(1.08) rotateY(0deg)",
-        rx.cond(
-            idx < MovieState.selected_index,
-            "scale(0.88) rotateY(28deg)",
-            "scale(0.88) rotateY(-28deg)",
-        ),
-    )
-
-    opacity = rx.cond(idx == MovieState.selected_index, "1.0", "0.75")
-
-    return rx.box(
-        rx.vstack(
-            rx.image(
-                src=movie["poster"],
-                width="220px",
-                height="330px",
-                object_fit="cover",
-                border_radius="14px",
-                alt=movie.get("title", "poster"),
-                onerror=f"this.onerror=null;this.image_src='{PLACEHOLDER_POSTER}';",
-            ),
-            rx.text(movie["title"], size="2", max_width="220px", overflow="hidden", white_space="nowrap"),
-            spacing="2",
-            align="center",
-        ),
-        on_click=MovieState.select_cover(idx),
-        style={
-            "transform": transform,
-            "transition": "transform 160ms ease, opacity 160ms ease",
-            "opacity": opacity,
-            "cursor": "pointer",
-            "perspective": "900px",
-        },
-        padding_x="2",
-    )
-
-
-def coverflow_view() -> rx.Component:
-    return rx.vstack(
-        rx.cond(
-            MovieState.loading,
-            rx.center(rx.spinner(size="3"), padding_y="6"),
-            rx.box(
-                rx.hstack(
-                    rx.foreach(MovieState.movies, coverflow_item),
-                    spacing="2",
-                    align="end",
-                ),
-                style={
-                    "overflowX": "auto",
-                    "padding": "12px",
-                    "borderRadius": "16px",
-                    "background": "rgba(0,0,0,0.02)",
-                    "scrollBehavior": "smooth",
-                    "whiteSpace": "nowrap",
-                },
-                width="100%",
-            ),
-        ),
-        rx.cond(
-            MovieState.prefetching,
-            rx.text("Preloading next page…", size="2", color_scheme="gray"),
-            rx.fragment(),
-        ),
-        width="100%",
-        spacing="4",
-        align="center",
-    )
+# coverflow UI removed; only cards view is supported
 
 
 def pager() -> rx.Component:
-    # For coverflow, "Next" uses the preload buffer for instant swap.
-    next_handler = rx.cond(MovieState.view_mode == "coverflow", MovieState.coverflow_next, MovieState.next_page)
+    next_handler = MovieState.next_page
     prev_handler = MovieState.prev_page
 
     return rx.hstack(
@@ -598,7 +413,7 @@ def index() -> rx.Component:
         rx.center(
             rx.vstack(
                 toolbar(),
-                rx.cond(MovieState.view_mode == "coverflow", coverflow_view(), cards_view()),
+                cards_view(),
                 spacing="5",
                 width="100%",
                 align="center",
