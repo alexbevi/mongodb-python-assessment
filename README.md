@@ -1,6 +1,6 @@
 # Mflix Reflex Browser (PyMongo + MongoDB Sample Dataset)
 
-A basic single-page application (SPA) built with **Reflex** + **PyMongo** that lets you **search and filter** the MongoDB **sample_mflix** movie catalog. It includes **two toggleable result views** (Cards + Coverflow), **configurable page size**, and **coverflow preloading** for seamless pagination.
+A basic single-page application (SPA) built with **Reflex** + **PyMongo** that lets you **search and filter** the MongoDB **sample_mflix** movie catalog. It includes a responsive **Cards view**, **configurable page size**, and simple pagination.
 
 ## Features
 
@@ -8,13 +8,9 @@ A basic single-page application (SPA) built with **Reflex** + **PyMongo** that l
 - **Filter** by:
   - Genre (auto-populated from the dataset)
   - Min/Max year
-- **Two views**
-  - **Cards view**: grid of movie cards
-  - **Coverflow view**: horizontal “coverflow-ish” poster strip with a selected state
+- **Cards view**: grid of movie cards (default and only view)
 - **Page size dropdown**: `10`, `25` (default), `50`, `100`
-- **Pagination**
-  - Cards: classic page-by-page
-  - Coverflow: **preloads the next `<page_size>` results** so “Next” swaps instantly
+- **Pagination**: classic page-by-page navigation
 
 ## Tech Stack
 
@@ -102,25 +98,13 @@ Then open:
 * The app builds a MongoDB query from the UI filters (search text, genre, year range).
 * Results are sorted by `title` and fetched using `skip`/`limit` based pagination.
 
-### Coverflow “Preload Next Page”
-
-In **Coverflow mode**, the app fetches **2× page_size** results per request:
-
-* First `page_size` = current page to render immediately
-* Next `page_size` = stored as a **preload buffer**
-
-When you click **Next**:
-
-1. The UI swaps in the preload buffer immediately.
-2. A background event refills the next preload buffer.
-
-This gives the “instant next page” feel without waiting on the network on each click.
+<!-- Coverflow and preload behavior removed: the app now uses simple pagination. -->
 
 ## Usage Tips
 
 * Try searching for common titles like: `star`, `love`, `war`
 * Use genre filtering to narrow a large result set quickly.
-* Coverflow is best experienced with a larger page size (e.g., 50) if you want more posters to scroll through.
+<!-- Coverflow usage tips removed (cards view only). -->
 
 ## Troubleshooting
 
