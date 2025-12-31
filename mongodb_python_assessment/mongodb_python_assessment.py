@@ -4,11 +4,22 @@ import re
 from typing import Any, Dict, List, Optional
 
 import certifi
+import base64
 import reflex as rx
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
 load_dotenv()
+
+# Standard placeholder used when a movie poster is missing or invalid.
+_PLACEHOLDER_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="220" height="330">'
+    '<rect width="100%" height="100%" fill="#e5e7eb"/>'
+    '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" '
+    'font-family="Arial" font-size="18" fill="#6b7280">No Poster</text>'
+    '</svg>'
+)
+PLACEHOLDER_POSTER = "data:image/svg+xml;base64," + base64.b64encode(_PLACEHOLDER_SVG.encode("utf-8")).decode("ascii")
 
 # -----------------------------
 # Mongo helpers (PyMongo)
@@ -37,16 +48,10 @@ def get_movies_collection():
 def serialize_movie(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Make Mongo docs JSON-serializable and UI-friendly."""
     imdb = doc.get("imdb") or {}
-    poster = doc.get("poster") or ""
-    # A tiny inline placeholder if poster is missing (keeps layout stable).
+    poster = doc.get('poster') or ""
+    # Use a standard placeholder if the poster is missing or empty.
     if not poster:
-        poster = "data:image/svg+xml;utf8," + (
-            "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450'>"
-            "<rect width='100%' height='100%' fill='#e5e7eb'/>"
-            "<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' "
-            "font-family='Arial' font-size='18' fill='#6b7280'>No Poster</text>"
-            "</svg>"
-        )
+        poster = PLACEHOLDER_POSTER
 
     return {
         "id": str(doc.get("_id")),
@@ -416,6 +421,8 @@ def toolbar() -> rx.Component:
                     width="120px",
                 ),
                 rx.button("Search", on_click=MovieState.apply_filters),
+                rx.spacer(),
+                pager(),
                 wrap="wrap",
                 spacing="3",
                 width="100%",
@@ -440,7 +447,14 @@ def toolbar() -> rx.Component:
 def movie_card(movie: rx.Var[Dict[str, Any]]) -> rx.Component:
     return rx.card(
         rx.vstack(
-            rx.image(src=movie["poster"], width="100%", height="260px", object_fit="cover"),
+            rx.image(
+                src=movie["poster"],
+                width="100%",
+                height="260px",
+                object_fit="cover",
+                alt=movie.get("title", "poster"),
+                onerror=f"this.onerror=null;this.src='{PLACEHOLDER_POSTER}';",
+            ),
             rx.hstack(
                 rx.heading(movie["title"], size="4"),
                 rx.spacer(),
@@ -483,6 +497,7 @@ def cards_view() -> rx.Component:
         ),
         width="100%",
         spacing="4",
+        align="center",
     )
 
 
@@ -509,6 +524,8 @@ def coverflow_item(movie: rx.Var[Dict[str, Any]], idx: rx.Var[int]) -> rx.Compon
                 height="330px",
                 object_fit="cover",
                 border_radius="14px",
+                alt=movie.get("title", "poster"),
+                onerror=f"this.onerror=null;this.image_src='{PLACEHOLDER_POSTER}';",
             ),
             rx.text(movie["title"], size="2", max_width="220px", overflow="hidden", white_space="nowrap"),
             spacing="2",
@@ -555,6 +572,7 @@ def coverflow_view() -> rx.Component:
         ),
         width="100%",
         spacing="4",
+        align="center",
     )
 
 
@@ -577,15 +595,21 @@ def pager() -> rx.Component:
 
 def index() -> rx.Component:
     return rx.container(
-        rx.vstack(
-            toolbar(),
-            rx.cond(MovieState.view_mode == "coverflow", coverflow_view(), cards_view()),
-            pager(),
-            spacing="5",
-            width="100%",
+        rx.center(
+            rx.vstack(
+                toolbar(),
+                rx.cond(MovieState.view_mode == "coverflow", coverflow_view(), cards_view()),
+                spacing="5",
+                width="100%",
+                align="center",
+            )
         ),
         max_width="1200px",
         padding_y="6",
+        height="100vh",
+        display="flex",
+        align="center",
+        justify="center",
     )
 
 
