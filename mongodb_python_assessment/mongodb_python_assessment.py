@@ -80,8 +80,7 @@ def movie_card(movie: rx.Var[Dict[str, Any]]) -> rx.Component:
                 width="100%",
                 height="260px",
                 object_fit="cover",
-                alt=movie.get("title", "poster"),
-                onerror=f"this.onerror=null;this.src='{PLACEHOLDER_POSTER}';",
+                alt=movie.get("title", "poster")
             ),
             rx.hstack(
                 rx.heading(movie["title"], size="4"),
