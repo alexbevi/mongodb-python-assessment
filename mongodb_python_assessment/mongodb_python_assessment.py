@@ -2,7 +2,6 @@ from typing import Any, Dict
 
 import reflex as rx
 from .state import MovieState
-from .helpers import PLACEHOLDER_POSTER
 
 def toolbar() -> rx.Component:
     return rx.card(
@@ -16,37 +15,60 @@ def toolbar() -> rx.Component:
             rx.divider(),
             rx.form(
                 rx.flex(
-                    rx.input(
-                    placeholder="Search title or plot…",
-                    value=MovieState.q,
-                    on_change=MovieState.set_query,
-                    width=["100%", "340px"],
-                ),
-                rx.select(
-                    MovieState.genres,
-                    value=MovieState.genre,
-                    on_change=MovieState.set_genre,
-                    width=["100%", "220px"],
-                ),
-                rx.input(
-                    placeholder="Min year",
-                    value=MovieState.min_year,
-                    on_change=MovieState.set_min_year,
-                    width="120px",
-                ),
-                rx.input(
-                    placeholder="Max year",
-                    value=MovieState.max_year,
-                    on_change=MovieState.set_max_year,
-                    width="120px",
-                ),
-                rx.select(
-                    ["10", "25", "50", "100"],
-                    value=MovieState.page_size,
-                    on_change=MovieState.change_page_size,
-                    width="120px",
-                ),
-                rx.button("Search", on_click=MovieState.apply_filters, type="submit"),
+                    rx.vstack(
+                            rx.text("Search", size="1", color_scheme="gray"),
+                            rx.input(
+                                placeholder="Search title or plot…",
+                                value=MovieState.q,
+                                on_change=MovieState.set_query,
+                                width=["100%", "340px"],
+                            ),
+                            width=["100%", "340px"],
+                        ),
+                    rx.vstack(
+                        rx.text("Genre", size="1", color_scheme="gray"),
+                        rx.select(
+                            MovieState.genres,
+                            value=MovieState.genre,
+                            on_change=MovieState.set_genre,
+                            width=["100%", "220px"],
+                        ),
+                        width=["100%", "220px"],
+                    ),
+                    rx.vstack(
+                        rx.text("Min year", size="1", color_scheme="gray"),
+                        rx.input(
+                            placeholder="Min year",
+                            value=MovieState.min_year,
+                            on_change=MovieState.set_min_year,
+                            width="120px",
+                        ),
+                        width="120px",
+                    ),
+                    rx.vstack(
+                        rx.text("Max year", size="1", color_scheme="gray"),
+                        rx.input(
+                            placeholder="Max year",
+                            value=MovieState.max_year,
+                            on_change=MovieState.set_max_year,
+                            width="120px",
+                        ),
+                        width="120px",
+                    ),
+                    rx.vstack(
+                        rx.text("Page size", size="1", color_scheme="gray"),
+                        rx.hstack(
+                            rx.select(
+                                ["10", "25", "50", "100"],
+                                value=MovieState.page_size,
+                                on_change=MovieState.change_page_size,
+                                width="120px",
+                            ),
+                            rx.button("Search", on_click=MovieState.apply_filters, type="submit"),
+                            spacing="2",
+                        ),
+                        width="120px",
+                    ),
                 rx.spacer(),
                 rx.divider(),
                 pager(),
