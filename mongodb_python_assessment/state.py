@@ -9,9 +9,8 @@ from .helpers import get_movies_collection, serialize_movie
 
 class MovieState(rx.State):
     # UI state
-    view_mode: str = "cards"
     page_size: str = "25"
-    page: int = 0                    # 0-based page index
+    page: int = 0
 
     # Filters
     q: str = ""
@@ -22,13 +21,11 @@ class MovieState(rx.State):
     # Data
     total: int = 0
     movies: List[Dict[str, Any]] = []
+
     # Misc
     genres: List[str] = ["All"]
     loading: bool = False
     error: str = ""
-    # Modal state
-    modal_open: bool = False
-    selected_movie: Optional[Dict[str, Any]] = None
 
     # -----------------------------
     # Computed vars
@@ -116,14 +113,6 @@ class MovieState(rx.State):
         self.movies = []
         self.error = ""
         return MovieState.load_movies
-
-    def open_movie(self, movie: Dict[str, Any]):
-        self.selected_movie = movie
-        self.modal_open = True
-
-    def close_modal(self):
-        self.modal_open = False
-        self.selected_movie = None
 
     def apply_filters(self):
         self.page = 0
