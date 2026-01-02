@@ -59,7 +59,3 @@ Then open:
 * Use genre filtering to narrow a large result set quickly.
 
 
-## License
-
-MIT (or your preferred license).
-
