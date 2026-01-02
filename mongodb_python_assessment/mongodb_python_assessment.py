@@ -4,10 +4,6 @@ import reflex as rx
 from .state import MovieState
 from .helpers import PLACEHOLDER_POSTER
 
-# -----------------------------
-# UI Components
-# -----------------------------
-
 def toolbar() -> rx.Component:
     return rx.card(
         rx.vstack(
@@ -18,8 +14,9 @@ def toolbar() -> rx.Component:
                 align="center",
             ),
             rx.divider(),
-            rx.flex(
-                rx.input(
+            rx.form(
+                rx.flex(
+                    rx.input(
                     placeholder="Search title or plot…",
                     value=MovieState.q,
                     on_change=MovieState.set_query,
@@ -49,13 +46,15 @@ def toolbar() -> rx.Component:
                     on_change=MovieState.change_page_size,
                     width="120px",
                 ),
-                rx.button("Search", on_click=MovieState.apply_filters),
+                rx.button("Search", on_click=MovieState.apply_filters, type="submit"),
                 rx.spacer(),
                 rx.divider(),
                 pager(),
                 wrap="wrap",
                 spacing="3",
                 width="100%",
+                ),
+                on_submit=MovieState.apply_filters,
             ),
             rx.cond(
                 MovieState.error != "",
