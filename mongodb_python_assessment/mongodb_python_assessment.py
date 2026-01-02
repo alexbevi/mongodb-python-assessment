@@ -134,9 +134,9 @@ def pager() -> rx.Component:
     prev_handler = MovieState.prev_page
 
     return rx.hstack(
-        rx.button("Prev", on_click=prev_handler, disabled=~MovieState.has_prev),
+        rx.button("Prev", on_click=prev_handler, disabled=~MovieState.has_prev, type="button"),
         rx.text(MovieState.page_label, size="2", color_scheme="gray"),
-        rx.button("Next", on_click=next_handler, disabled=~MovieState.has_next),
+        rx.button("Next", on_click=next_handler, disabled=~MovieState.has_next, type="button"),
         width="100%",
         align="center",
         justify="center",
