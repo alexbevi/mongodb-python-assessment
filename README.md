@@ -20,28 +20,6 @@ This project can be used during a technical interview to assess the Python progr
 >   * Validate the rating to ensure it is greater than 0 and less than or equal to 10
 >   * Note that using the MongoDB Shell this might look like the following: `db.movies.find({ "imdb.rating": { $gte: 7.3 } })`
 
-## Setup
-
-### 1) Create and activate a virtualenv
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 2) Install dependencies
-
-```bash
-pip install reflex pymongo certifi python-dotenv
-```
-
-### 3) Initialize Reflex (if you haven’t already)
-
-```bash
-reflex init
-```
-
-Choose a blank template when prompted.
 
 ## Configuration
 
