@@ -1,2 +1,4 @@
-
+certifi==2025.11.12
+pymongo==4.15.5
+python-dotenv==1.2.1
 reflex==0.8.24.post1
